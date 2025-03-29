@@ -1,0 +1,15 @@
+--cc
+-LDFLAGS -lwebsockets
+
+
+./board_files/nexys_adder.sv
+./fulladder32.sv
+
+
+--exe
+
+./tb_ViDBo.cpp
+./vidbo.c
+
+-DViDBo=1
+
