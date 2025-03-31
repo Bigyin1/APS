@@ -13,45 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <stdint.h>
-#include <signal.h>
-
-#include "vidbo.h"
-
-#include "Vnexys_adder.h"
-
-using namespace std;
-
-static bool done;
-
-vluint64_t main_time = 0;
-
-double sc_time_stamp () {
-  return main_time;
-}
-
-void INThandler(int signal) {
-  printf("\nCaught ctrl-c\n");
-  done = true;
-}
+#include <iostream>
+#include "Nexys.hpp"
 
 
-void sendToSevenSegByNum(vidbo_context_t *vidbo_context, int num, int val) {
-
-  char item2[13] = {0};
-
-  if(val < 10)
-    val = val + 48; // to ASCII
-  else
-    val = val + 55;
-
-  snprintf(item2, 13, "SevSegDispl%d", num);
-
-  vidbo_send(vidbo_context, main_time, item2, "digit", val);
-}
 
 
-void processSevSeg(vidbo_context_t *vidbo_context, Vnexys_adder* top) {
+
+// void sendToSevenSegByNum(vidbo_context_t *vidbo_context, int num, int val) {
+
+//   char item2[13] = {0};
+
+//   if(val < 10)
+//     val = val + 48; // to ASCII
+//   else
+//     val = val + 55;
+
+//   snprintf(item2, 13, "SevSegDispl%d", num);
+
+//   vidbo_send(vidbo_context, main_time, item2, "digit", val);
+// }
+
+
+void processSevSeg(int vidbo_context, Vnexys_adder* top) {
   
   static vluint64_t lastSegSend = 0;
   static int lastDigit[8] = {-1};
@@ -121,7 +105,6 @@ void processSevSeg(vidbo_context_t *vidbo_context, Vnexys_adder* top) {
 
 
 int main(int argc, char **argv, char **env) {
-  vidbo_context_t vidbo_context;
 
   const char * const inputs[] = {
     "gpio.SW0",
@@ -158,8 +141,6 @@ int main(int argc, char **argv, char **env) {
 
   Vnexys_adder* top = new Vnexys_adder;
 
-  signal(SIGINT, INThandler);
-
   int check_vidbo = 0;
 
   printf("\nHELLO_TB\n");
@@ -176,6 +157,8 @@ int main(int argc, char **argv, char **env) {
     check_vidbo++;
 
     char item[5] = {0}; //Space for LD??\0
+
+    printf("in loop\n");
     if (last_leds != top->LED) {
         for (int i=0;i<16;i++) {
           snprintf(item, 5, "LD%d", i);
@@ -206,4 +189,39 @@ int main(int argc, char **argv, char **env) {
   }
 
   exit(0);
+}
+
+
+void Nexys::Start() {
+
+  started.store(true);
+
+  top.CLK100 = 1;
+
+  while (!Verilated::gotFinish())
+  {
+    top.eval();
+
+    top.resetn = 1;
+    if (mainTime <= 100)
+      top.resetn = 0;
+
+    
+
+
+    tick();
+  }
+  
+
+  
+}
+
+
+void Nexys::tick() {
+  top.CLK100 = !top.CLK100;
+  mainTime+=10;
+}
+
+void Nexys::reset() {
+  top.resetn = 0;
 }
