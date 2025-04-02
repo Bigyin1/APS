@@ -35,8 +35,6 @@ module nexys_adder (
   wire        Pout;
 
 
-
-
   localparam pwm = 1000;
   reg [9:0] counter;
   reg [3:0] semseg;

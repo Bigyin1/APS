@@ -2,64 +2,106 @@
 
 #include <ixwebsocket/IXWebSocketServer.h>
 
+#include <array>
 #include <bitset>
+#include <chrono>
+#include <format>
 #include <mutex>
+#include <nlohmann/json.hpp>
+#include <sstream>
 
 #include "Vnexys_adder.h"
 
-class NexysState
+using json = nlohmann::json;
+
+class Peripherals final
 {
-
 private:
-    std::bitset<16> oldLeds;
-    std::bitset<16> leds;
 
+    uint16_t        lastLeds;
     std::bitset<16> switches;
-    // std::bitset<5>  buttons;
 
-    std::mutex smtx;
+    std::array<uint8_t, 8> sevseg;
+
+    std::mutex     smtx;
+    ix::WebSocket* conn;
 
 public:
-    void setSwitch(size_t idx, bool val)
+
+    void UpdateSwitches(json& gpio) noexcept
     {
         std::lock_guard<std::mutex> lock(smtx);
-        this->switches.set(idx, val);
+
+        for (auto& [key, value] : gpio.items())
+        {
+            if (!key.starts_with("SW"))
+                continue;
+
+            std::stringstream sstream(key.substr(2));
+            size_t            idx;
+            sstream >> idx;
+
+            if (idx > 15)
+                continue;
+
+            switches.set(idx, value);
+        }
     }
 
-    void setLED(size_t idx, bool val) { this->leds.set(idx, val); }
-
-    std::optional<std::bitset<16>> getLEDs()
+    void SendLEDs(uint16_t leds)
     {
-        if (leds == oldLeds)
-            return std::nullopt;
+        if (leds == lastLeds)
+            return;
 
-        oldLeds = leds;
-        return leds;
+        json j;
+
+        std::bitset<16> ledsMap     = leds;
+        std::bitset<16> lastLedsMap = lastLeds;
+        for (size_t i = 0; i < ledsMap.size(); ++i)
+        {
+            if (ledsMap[i] == lastLedsMap[i])
+                continue;
+
+            j["gpio"][std::format("LD{}", i)] = ledsMap[i] ? true : false;
+        }
+
+        conn->sendText(j.dump(4));
+
+        lastLeds = leds;
+    }
+
+    void SendSevSeg(const Vnexys_adder& top);
+
+    uint16_t GetSwitches() noexcept
+    {
+        std::lock_guard<std::mutex> lock(smtx);
+        return switches.to_ullong();
     }
 };
 
 class Nexys
 {
-
 public:
-    Nexys(ix::WebSocket& wsconn) : conn(wsconn) {}
-    ~Nexys() { conn.close(); }
+    Nexys(ix::WebSocket& wsconn) : periph(wsconn) {}
 
-    bool IsStarted() { return started.load(); }
+    void StartMainLoop();
 
-    void Start();
+    void Start() {started.store(true);}
+    void Stop() {started.store(false);}
 
-    void UpdateInputs();
+    bool Started() {return started.load();}
+
+    void UpdateInputs(json& inp) { periph.UpdateSwitches(inp["gpio"]); };
+
+    void SetConn(ix::WebSocket& wsconn);
 
 private:
     void tick();
     void reset();
 
-    ix::WebSocket& conn;
-
     Vnexys_adder      top      = Vnexys_adder();
     vluint64_t        mainTime = 0;
     std::atomic<bool> started  = false;
 
-    NexysState state;
+    Peripherals periph;
 };
