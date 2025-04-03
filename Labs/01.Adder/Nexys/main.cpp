@@ -42,7 +42,7 @@ int main()
                 auto j = json::parse(msg->str);
 
                 std::cout << j.dump(4) << std::endl;
-                
+
                 board.get()->UpdateInputs(j);
             }
         });

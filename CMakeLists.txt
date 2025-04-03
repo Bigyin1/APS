@@ -18,5 +18,12 @@ FetchContent_Declare(json
 FetchContent_MakeAvailable(json)
 
 
+FetchContent_Declare(fmt
+  GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+  GIT_TAG master
+)
+FetchContent_MakeAvailable(fmt)
+
+
 find_package(verilator)
 add_subdirectory(Labs/01.Adder)

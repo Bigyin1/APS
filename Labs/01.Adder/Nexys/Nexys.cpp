@@ -30,7 +30,7 @@ static uint8_t sevSegToHex(uint8_t Digit)
         Digit_Hex = 10;
     if (Digit == 0x60)
         Digit_Hex = 11;
-    if (Digit == 0x72)
+    if (Digit == 0x31)
         Digit_Hex = 12;
     if (Digit == 0x42)
         Digit_Hex = 13;
@@ -77,7 +77,7 @@ static char digitToASCII(uint8_t digit)
 
 void Peripherals::SendSevSeg(const Vnexys_adder& top)
 {
-    constexpr auto sendInterval = 200ms;
+    constexpr auto sendInterval = 333ms;
     static auto    lastSend     = std::chrono::steady_clock::now();
 
     uint8_t digit = (top.CA << 6) + (top.CB << 5) + (top.CC << 4) + (top.CD << 3) + (top.CE << 2) +
@@ -97,7 +97,7 @@ void Peripherals::SendSevSeg(const Vnexys_adder& top)
         json j;
         for (size_t i = 0; i < sevseg.size(); i++)
         {
-            j[std::format("SevSegDispl{}", i)] = digitToASCII(sevseg.at(i));
+            j[fmt::format("SevSegDispl{}", i)] = digitToASCII(sevseg.at(i));
         }
 
         conn.sendText(j.dump());

@@ -1,11 +1,11 @@
 #pragma once
 
+#include <fmt/core.h>
 #include <ixwebsocket/IXWebSocketServer.h>
 
 #include <array>
 #include <bitset>
 #include <chrono>
-#include <format>
 #include <iostream>
 #include <mutex>
 #include <nlohmann/json.hpp>
@@ -64,7 +64,7 @@ public:
             if (ledsMap[i] == lastLedsMap[i])
                 continue;
 
-            j["gpio"][std::format("LD{}", i)] = ledsMap[i] ? 1 : 0;
+            j["gpio"][fmt::format("LD{}", i)] = ledsMap[i] ? 1 : 0;
         }
 
         conn.sendText(j.dump(4));
