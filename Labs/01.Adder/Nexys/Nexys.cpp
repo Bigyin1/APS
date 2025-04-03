@@ -93,13 +93,14 @@ void Peripherals::SendSevSeg(const Vnexys_adder& top)
 
     if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastSend) >= sendInterval)
     {
+
         json j;
         for (size_t i = 0; i < sevseg.size(); i++)
         {
-            j[std::format("SevSegDispl{}", i)] = digitToASCII(sevseg[i]);
+            j[std::format("SevSegDispl{}", i)] = digitToASCII(sevseg.at(i));
         }
 
-        conn->sendText(j.dump());
+        conn.sendText(j.dump());
 
         lastSend = std::chrono::steady_clock::now();
     }
@@ -107,10 +108,10 @@ void Peripherals::SendSevSeg(const Vnexys_adder& top)
 
 void Nexys::StartMainLoop()
 {
-
+    started.store(true);
     top.CLK100 = 1;
 
-    while (!Verilated::gotFinish())
+    while (started.load() && !Verilated::gotFinish())
     {
         top.eval();
 
@@ -133,7 +134,4 @@ void Nexys::tick()
     mainTime += 10;
 }
 
-void Nexys::reset()
-{
-    top.resetn = 0;
-}
+void Nexys::reset() { top.resetn = 0; }

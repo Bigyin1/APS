@@ -68,21 +68,21 @@
 				circle.setAttribute('cy', is_on ? 850 : 900);
 
 				const s = 'SW' + i;
-				msg.gpio[s] = is_on;
+				msg.gpio[s] = is_on == 1;
 			}
 
-			for (let i = 16; i < 21; i++) {
-				var sw = nexys.getElementById('SW' + i);
-				const circle = sw.querySelector("circle")
-				const r = circle.getAttribute('r')
-				const is_on = 0;
+			// for (let i = 16; i < 21; i++) {
+			// 	var sw = nexys.getElementById('SW' + i);
+			// 	const circle = sw.querySelector("circle")
+			// 	const r = circle.getAttribute('r')
+			// 	const is_on = 0;
 
-				circle.setAttribute('r', is_on ? 10 : 18);
+			// 	circle.setAttribute('r', is_on ? 10 : 18);
 
-				const s = 'SW' + i;
+			// 	const s = 'SW' + i;
 
-				msg.gpio[s] = is_on;
-			}
+			// 	msg.gpio[s] = is_on;
+			//}
 
 
 			ws.send(JSON.stringify(msg));
@@ -123,56 +123,56 @@
 			if ("SevSegDispl0" in json_obj) {
 				document.getElementById("SevSegDispl0").value = "";
 				SevSegDispl_area = document.getElementById("SevSegDispl0");
-				SevSegDispl_area.value += String.fromCharCode(json_obj.SevSegDispl0.digit);
+				SevSegDispl_area.value += String.fromCharCode(json_obj.SevSegDispl0);
 				SevSegDispl_area.scrollTop = SevSegDispl_area.scrollHeight;
 			}
 
 			if ("SevSegDispl1" in json_obj) {
 				document.getElementById("SevSegDispl1").value = "";
 				SevSegDispl_area = document.getElementById("SevSegDispl1");
-				SevSegDispl_area.value += String.fromCharCode(json_obj.SevSegDispl1.digit);
+				SevSegDispl_area.value += String.fromCharCode(json_obj.SevSegDispl1);
 				SevSegDispl_area.scrollTop = SevSegDispl_area.scrollHeight;
 			}
 
 			if ("SevSegDispl2" in json_obj) {
 				document.getElementById("SevSegDispl2").value = "";
 				SevSegDispl_area = document.getElementById("SevSegDispl2");
-				SevSegDispl_area.value += String.fromCharCode(json_obj.SevSegDispl2.digit);
+				SevSegDispl_area.value += String.fromCharCode(json_obj.SevSegDispl2);
 				SevSegDispl_area.scrollTop = SevSegDispl_area.scrollHeight;
 			}
 
 			if ("SevSegDispl3" in json_obj) {
 				document.getElementById("SevSegDispl3").value = "";
 				SevSegDispl_area = document.getElementById("SevSegDispl3");
-				SevSegDispl_area.value += String.fromCharCode(json_obj.SevSegDispl3.digit);
+				SevSegDispl_area.value += String.fromCharCode(json_obj.SevSegDispl3);
 				SevSegDispl_area.scrollTop = SevSegDispl_area.scrollHeight;
 			}
 
 			if ("SevSegDispl4" in json_obj) {
 				document.getElementById("SevSegDispl4").value = "";
 				SevSegDispl_area = document.getElementById("SevSegDispl4");
-				SevSegDispl_area.value += String.fromCharCode(json_obj.SevSegDispl4.digit);
+				SevSegDispl_area.value += String.fromCharCode(json_obj.SevSegDispl4);
 				SevSegDispl_area.scrollTop = SevSegDispl_area.scrollHeight;
 			}
 
 			if ("SevSegDispl5" in json_obj) {
 				document.getElementById("SevSegDispl5").value = "";
 				SevSegDispl_area = document.getElementById("SevSegDispl5");
-				SevSegDispl_area.value += String.fromCharCode(json_obj.SevSegDispl5.digit);
+				SevSegDispl_area.value += String.fromCharCode(json_obj.SevSegDispl5);
 				SevSegDispl_area.scrollTop = SevSegDispl_area.scrollHeight;
 			}
 
 			if ("SevSegDispl6" in json_obj) {
 				document.getElementById("SevSegDispl6").value = "";
 				SevSegDispl_area = document.getElementById("SevSegDispl6");
-				SevSegDispl_area.value += String.fromCharCode(json_obj.SevSegDispl6.digit);
+				SevSegDispl_area.value += String.fromCharCode(json_obj.SevSegDispl6);
 				SevSegDispl_area.scrollTop = SevSegDispl_area.scrollHeight;
 			}
 
 			if ("SevSegDispl7" in json_obj) {
 				document.getElementById("SevSegDispl7").value = "";
 				SevSegDispl_area = document.getElementById("SevSegDispl7");
-				SevSegDispl_area.value += String.fromCharCode(json_obj.SevSegDispl7.digit);
+				SevSegDispl_area.value += String.fromCharCode(json_obj.SevSegDispl7);
 				SevSegDispl_area.scrollTop = SevSegDispl_area.scrollHeight;
 			}
 

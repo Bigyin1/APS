@@ -14,40 +14,44 @@ int main()
 
     std::unique_ptr<Nexys> board = nullptr;
 
-    std::thread boardLoop;
-
-
     server.setOnClientMessageCallback(
         [&board](std::shared_ptr<ix::ConnectionState> connectionState, ix::WebSocket& webSocket,
                  const ix::WebSocketMessagePtr& msg)
         {
             if (msg->type == ix::WebSocketMessageType::Open)
             {
-                std::cout << "New connection" << std::endl;
-
                 if (board != nullptr)
+                {
+                    webSocket.close();
                     return;
+                }
 
                 board = std::make_unique<Nexys>(webSocket);
 
-
+                std::thread mloop(&Nexys::StartMainLoop, board.get());
+                mloop.detach();
             }
-            else if (msg->type == ix::WebSocketMessageType::Close) {
-
-                Verilated::ver
+            else if (msg->type == ix::WebSocketMessageType::Close)
+            {
+                board.get()->StopMainLoop();
+                std::this_thread::sleep_for(5ms);
                 board.reset(nullptr);
             }
             else if (msg->type == ix::WebSocketMessageType::Message)
             {
-                webSocket.send(msg->str, msg->binary);
+                auto j = json::parse(msg->str);
+
+                std::cout << j.dump(4) << std::endl;
+                
+                board.get()->UpdateInputs(j);
             }
         });
 
-    auto res = server.listen();
-    if (!res.first)
+    auto res = server.listenAndStart();
+    if (!res)
         return 1;
 
-    server.start();
+    std::cout << "Server Started!" << std::endl;
 
     server.wait();
 }

@@ -6,6 +6,7 @@
 #include <bitset>
 #include <chrono>
 #include <format>
+#include <iostream>
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <sstream>
@@ -17,16 +18,16 @@ using json = nlohmann::json;
 class Peripherals final
 {
 private:
+    uint16_t        lastLeds = 0;
+    std::bitset<16> switches = {0};
 
-    uint16_t        lastLeds;
-    std::bitset<16> switches;
+    std::array<uint8_t, 8> sevseg = {0};
 
-    std::array<uint8_t, 8> sevseg;
-
-    std::mutex     smtx;
-    ix::WebSocket* conn;
+    std::mutex     smtx{};
+    ix::WebSocket& conn;
 
 public:
+    Peripherals(ix::WebSocket& wsconn) : conn(wsconn) {}
 
     void UpdateSwitches(json& gpio) noexcept
     {
@@ -57,15 +58,16 @@ public:
 
         std::bitset<16> ledsMap     = leds;
         std::bitset<16> lastLedsMap = lastLeds;
+
         for (size_t i = 0; i < ledsMap.size(); ++i)
         {
             if (ledsMap[i] == lastLedsMap[i])
                 continue;
 
-            j["gpio"][std::format("LD{}", i)] = ledsMap[i] ? true : false;
+            j["gpio"][std::format("LD{}", i)] = ledsMap[i] ? 1 : 0;
         }
 
-        conn->sendText(j.dump(4));
+        conn.sendText(j.dump(4));
 
         lastLeds = leds;
     }
@@ -75,7 +77,7 @@ public:
     uint16_t GetSwitches() noexcept
     {
         std::lock_guard<std::mutex> lock(smtx);
-        return switches.to_ullong();
+        return static_cast<uint16_t>(switches.to_ullong());
     }
 };
 
@@ -85,15 +87,9 @@ public:
     Nexys(ix::WebSocket& wsconn) : periph(wsconn) {}
 
     void StartMainLoop();
+    void StopMainLoop() { started.store(false); }
 
-    void Start() {started.store(true);}
-    void Stop() {started.store(false);}
-
-    bool Started() {return started.load();}
-
-    void UpdateInputs(json& inp) { periph.UpdateSwitches(inp["gpio"]); };
-
-    void SetConn(ix::WebSocket& wsconn);
+    void UpdateInputs(json inp) { periph.UpdateSwitches(inp["gpio"]); };
 
 private:
     void tick();

@@ -18,5 +18,5 @@ FetchContent_Declare(json
 FetchContent_MakeAvailable(json)
 
 
-find_package(verilator HINTS $ENV{VERILATOR_ROOT})
+find_package(verilator)
 add_subdirectory(Labs/01.Adder)
