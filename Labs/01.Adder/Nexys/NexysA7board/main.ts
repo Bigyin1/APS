@@ -1,10 +1,11 @@
-import { Board } from "./board";
+import { Board } from "./board.js";
 
 
 class NexysClient {
     addr: string;
 
     board: Board;
+    
 
     constructor(addr: string) {
         this.addr = addr
@@ -14,9 +15,10 @@ class NexysClient {
         console.log("OK");
     }
 
+
 }
 
 
 
 
-let cl = new NexysClient(`http://${window.location.host}`);
+let cl = new NexysClient(`ws://${window.location.host}:8081`);
