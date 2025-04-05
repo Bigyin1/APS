@@ -1,0 +1,15 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "typescript",
+			"tsconfig": "Labs/01.Adder/Nexys/NexysA7board/tsconfig.json",
+			"option": "watch",
+			"problemMatcher": [
+				"$tsc-watch"
+			],
+			"group": "build",
+			"label": "tsc: отслеживание — Labs/01.Adder/Nexys/NexysA7board/tsconfig.json"
+		}
+	]
+}

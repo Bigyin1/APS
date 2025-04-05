@@ -1,24 +1,70 @@
 import { Board } from "./board.js";
+import { GPIO, BoardUpdates } from "./models.js";
+import { EventBus } from "./pubsub.js";
 
 
 class NexysClient {
-    addr: string;
+    private ws: WebSocket;
 
-    board: Board;
-    
+    private connected = false;
+    private connBtn: HTMLButtonElement;
+
+    private board: Board;
+    private bus: EventBus;
 
     constructor(addr: string) {
-        this.addr = addr
 
-        this.board = new Board();
+        this.connBtn = document.getElementById("btConn") as HTMLButtonElement;
+        
+        document.getElementById("btConn").onclick =  (e: Event) => {
+            this.bus = new EventBus();
 
-        console.log("OK");
+            if (this.connected == false) {
+                this.ws = new WebSocket(addr);
+                this.connBtn.value = "Disconnect";
+                this.connected = true;
+            } else {
+                this.ws.close();
+            }
+        
+
+            this.ws.onopen = (e: Event) => {
+                this.bus.Subscribe("btn", (upd) => {this.sendGPIO(upd)});
+                this.board = new Board(this.bus);
+            }
+
+
+            this.ws.onmessage = (e: MessageEvent) => {
+                const upd : BoardUpdates = JSON.parse(e.data);
+                console.log(upd);
+                this.wsMsgDispatcher(upd);
+            }
+
+            this.ws.onclose = (e: Event) => {
+                this.connBtn.value = "Connect to board";
+                this.connected = false;
+            }
+
+        };
     }
 
 
+    private sendGPIO(data : GPIO) {
+        this.ws.send(JSON.stringify({gpio : data}));
+    }
+
+
+    private wsMsgDispatcher(upds : BoardUpdates) {
+    
+        if (upds.gpio) {
+            upds.gpio.forEach((upd: GPIO) => {
+                this.bus.Publish("led", upd);
+            })
+        }
+        if (upds.sevseg) {
+            this.bus.Publish("sevseg", upds);
+        }
+    }
 }
 
-
-
-
-let cl = new NexysClient(`ws://${window.location.host}:8081`);
+let cl = new NexysClient(`ws://${window.location.hostname}:8081`);

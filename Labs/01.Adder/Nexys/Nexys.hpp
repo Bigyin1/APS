@@ -33,20 +33,19 @@ public:
     {
         std::lock_guard<std::mutex> lock(smtx);
 
-        for (auto& [key, value] : gpio.items())
-        {
-            if (!key.starts_with("SW"))
-                continue;
+        std::string id = gpio["id"];
 
-            std::stringstream sstream(key.substr(2));
-            size_t            idx;
-            sstream >> idx;
+        if (!id.starts_with("SW"))
+            return;
 
-            if (idx > 15)
-                continue;
+        std::stringstream sstream(id.substr(2));
+        size_t            idx;
+        sstream >> idx;
 
-            switches.set(idx, value);
-        }
+        if (idx > 15)
+            return;
+
+        switches.set(idx, gpio["on"]);
     }
 
     void SendLEDs(uint16_t leds)
@@ -64,7 +63,8 @@ public:
             if (ledsMap[i] == lastLedsMap[i])
                 continue;
 
-            j["gpio"][fmt::format("LD{}", i)] = ledsMap[i] ? 1 : 0;
+            j["gpio"].push_back(
+                {{"id", fmt::format("LD{}", i)}, {"on", ledsMap[i] ? true : false}});
         }
 
         conn.sendText(j.dump(4));

@@ -1,51 +1,102 @@
+import { EventBus } from "./pubsub.js";
+import { GPIO, SevSegArray, HexDigit} from "./models.js";
 
-interface Toggler {
-    Toggle() : void;
+
+abstract class Button {
+
+    id: string;
+    on = false;
+
+    protected btn: SVGCircleElement;
+
+    constructor(btn: HTMLElement, bus: EventBus) {
+        this.btn = btn.querySelector("circle");
+        this.id = btn.id;
+
+        btn.onclick = (e) => {
+            this.Toggle();
+
+            bus.Publish("btn", {on: this.on, id: this.id} as GPIO);
+        };
+
+        bus.Publish("btn", {on: this.on, id: this.id} as GPIO) // initial state
+    }
+
+    protected abstract Toggle(): void;
 }
 
 
-class Button implements Toggler {
+class PushButton extends Button {
 
-    btn: SVGCircleElement;
+    private offR = "18";
+    private onR = "10";
 
-    constructor(btn: HTMLElement) {
-        this.btn = btn.querySelector("circle");
-
-        btn.onclick = this.Toggle;
+    constructor(btn: HTMLElement, bus: EventBus) {
+        super(btn, bus)
     }
 
-    Toggle() : void {
+    protected Toggle(): void {
         const r = this.btn.getAttribute('r')
-        const is_on = r == "18";
+        this.on = !this.on;
 
-        this.btn.setAttribute('r', is_on ? "10" : "18");
+        this.btn.setAttribute('r', this.on ? this.onR : this.offR);
     }
 }
 
 
 class Switch extends Button {
-    constructor(btn: HTMLElement) {
-        super(btn)
+
+    private offY = "900";
+    private onY = "850";
+
+    constructor(btn: HTMLElement, bus: EventBus) {
+        super(btn, bus)
     }
 
-    Toggle() : void {
+    protected Toggle(): void {
         const cy = this.btn.getAttribute('cy')
-        const is_on = cy == "900";
+        this.on = !this.on;
 
-        this.btn.setAttribute('cy', is_on ? "850" : "900");
+        this.btn.setAttribute('cy', this.on ? this.onY : this.offY);
     }
 }
 
 class LED {
+    id: string;
 
-    led: SVGCircleElement;
+    private led: SVGCircleElement;
 
-    constructor(led: SVGElement) {
+    constructor(led: HTMLElement, bus: EventBus) {
         this.led = led.querySelector("circle");
+        this.id = led.id;
+
+        bus.Subscribe("led", (upd) => {this.Set(upd)});
     }
 
-    Set(on: boolean) {
-        this.led.setAttribute('opacity', on ? "1.0" : "0.1");
+    Set(upd : GPIO) {
+        if (upd.id != this.id)
+            return;
+
+        this.led.setAttribute('opacity', upd.on ? "1.0" : "0.1");
+    }
+}
+
+
+class SevSegDispl {
+    private display : HTMLTextAreaElement[];
+
+    constructor(display: HTMLElement, bus: EventBus) {
+        this.display = Array.from(display.children) as HTMLTextAreaElement[]
+
+        bus.Subscribe("sevseg", (upd) => {this.Set(upd)});
+    }
+
+
+    Set(upd : SevSegArray) {
+        [...this.display].reverse().forEach((d: HTMLTextAreaElement, idx: number) => {
+            d.value = upd.sevseg[idx];
+            d.scrollTop = d.scrollHeight;
+        })
     }
 }
 
@@ -53,18 +104,30 @@ class LED {
 export class Board {
     board: Document;
 
-    buttons: Map<string, Button>;
-    leds: Map<string, LED>;
+    private buttons: Map<string, Button> = new Map();
+    private leds: Map<string, LED> = new Map();
+    private sevseg: SevSegDispl;
 
-    constructor() {
+    constructor(bus: EventBus) {
         let boardObject = document.getElementById('nexys-svg') as HTMLObjectElement;
+        let board = boardObject.contentDocument;
 
-        this.board = boardObject.contentDocument;
+        for (let i = 0; i < 16; i++) {
+            const sw_id = `SW${i}`;
+            const sw_i = board.getElementById(sw_id);
 
-        this.buttons["SW1"] = new Switch(this.board.getElementById("SW1")); 
+            this.buttons[sw_id] = new Switch(sw_i, bus);
+        }
+
+        for (let i = 0; i < 16; i++) {
+            const ld_id = `LD${i}`;
+            const ld_i = board.getElementById(ld_id);
+
+            this.leds[ld_id] = new LED(ld_i, bus);
+        }
+
+        this.sevseg = new SevSegDispl(document.getElementById("SevSegDispl"), bus);
+
     }
 
-    Update(data: Object) {
-
-    }
 }

@@ -97,7 +97,7 @@ void Peripherals::SendSevSeg(const Vnexys_adder& top)
         json j;
         for (size_t i = 0; i < sevseg.size(); i++)
         {
-            j[fmt::format("SevSegDispl{}", i)] = digitToASCII(sevseg.at(i));
+            j["sevseg"].push_back(std::string(1, digitToASCII(sevseg.at(i))));
         }
 
         conn.sendText(j.dump());
