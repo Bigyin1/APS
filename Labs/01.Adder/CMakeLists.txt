@@ -1,13 +1,20 @@
 
+verilate(
+    Vnexys
+    PREFIX Vnexys
+    SOURCES board_files/nexys_adder.sv fulladder32.sv cla4.sv
+    VERILATOR_ARGS -Wno-fatal --cc --exe
+)
 
-add_executable(Vnexys_adder Nexys/main.cpp Nexys/Nexys.cpp)
 
-target_link_libraries(Vnexys_adder PRIVATE ixwebsocket::ixwebsocket nlohmann_json::nlohmann_json fmt::fmt )
+SET(TB_NAME Vtb)
+add_executable(${TB_NAME} tb.cpp)
 
-verilate(Vnexys_adder
-    SOURCES board_files/nexys_adder.sv fulladder32.sv
-    TOP_MODULE nexys_adder
-
-    VERILATOR_ARGS -Wno-fatal --cc --exe -DViDBo=1
+if ($<TARGET_NAME:target> STREQUAL ${TB_NAME})
+    verilate(
+        ${TB_NAME}
+        PREFIX ${TB_NAME}
+        SOURCES tb_fulladder32.sv fulladder32.sv cla4.sv
+        VERILATOR_ARGS -Wno-fatal --timing --cc --exe
     )
-
+endif()

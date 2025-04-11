@@ -11,7 +11,7 @@
 #include <nlohmann/json.hpp>
 #include <sstream>
 
-#include "Vnexys_adder.h"
+using namespace std::literals::chrono_literals;
 
 using json = nlohmann::json;
 
@@ -72,7 +72,7 @@ public:
         lastLeds = leds;
     }
 
-    void SendSevSeg(const Vnexys_adder& top);
+    void SendSevSeg(uint8_t digit, uint8_t AN);
 
     uint16_t GetSwitches() noexcept
     {
@@ -92,11 +92,7 @@ public:
     void UpdateInputs(json inp) { periph.UpdateSwitches(inp["gpio"]); };
 
 private:
-    void tick();
-    void reset();
 
-    Vnexys_adder      top      = Vnexys_adder();
-    vluint64_t        mainTime = 0;
     std::atomic<bool> started  = false;
 
     Peripherals periph;

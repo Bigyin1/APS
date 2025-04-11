@@ -9,7 +9,7 @@ See https://github.com/MPSU/APS/blob/master/LICENSE file for licensing details.
 * ------------------------------------------------------------------------------
 */
 
-module lab_01_tb_fulladder32();
+module tb_fulladder32();
 
   logic [31:0] tb_a_i;
   logic [31:0] tb_b_i;

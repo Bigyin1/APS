@@ -75,17 +75,15 @@ static char digitToASCII(uint8_t digit)
         return digit + 55;
 }
 
-void Peripherals::SendSevSeg(const Vnexys_adder& top)
+void Peripherals::SendSevSeg(uint8_t digit, uint8_t AN)
 {
     constexpr auto sendInterval = 333ms;
     static auto    lastSend     = std::chrono::steady_clock::now();
 
-    uint8_t digit = (top.CA << 6) + (top.CB << 5) + (top.CC << 4) + (top.CD << 3) + (top.CE << 2) +
-                    (top.CF << 1) + (top.CG);
 
     uint8_t digitHex = sevSegToHex(digit);
 
-    uint8_t digitIdx = anodeToIdx(top.AN);
+    uint8_t digitIdx = anodeToIdx(AN);
 
     this->sevseg.at(digitIdx) = digitHex;
 
@@ -106,32 +104,4 @@ void Peripherals::SendSevSeg(const Vnexys_adder& top)
     }
 }
 
-void Nexys::StartMainLoop()
-{
-    started.store(true);
-    top.CLK100 = 1;
 
-    while (started.load() && !Verilated::gotFinish())
-    {
-        top.eval();
-
-        top.SW = this->periph.GetSwitches();
-
-        this->periph.SendLEDs(top.LED);
-        this->periph.SendSevSeg(top);
-
-        top.resetn = 1;
-        if (mainTime <= 100)
-            top.resetn = 0;
-
-        tick();
-    }
-}
-
-void Nexys::tick()
-{
-    top.CLK100 = !top.CLK100;
-    mainTime += 10;
-}
-
-void Nexys::reset() { top.resetn = 0; }
