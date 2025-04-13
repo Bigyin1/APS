@@ -76,14 +76,8 @@ module nexys_adder (
         counter <= counter + 'b1;
       else begin
         counter  <= 'b0;
-        ANreg[1] <= ANreg[0];
-        ANreg[2] <= ANreg[1];
-        ANreg[3] <= ANreg[2];
-        ANreg[4] <= ANreg[3];
-        ANreg[5] <= ANreg[4];
-        ANreg[6] <= ANreg[5];
-        ANreg[7] <= ANreg[6];
-        ANreg[0] <= ANreg[7];
+
+        ANreg <=  {ANreg[$left(ANreg)-1:0], ANreg[$left(ANreg)]};
       end
 
       unique case (1'b0)
