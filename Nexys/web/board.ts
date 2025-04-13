@@ -1,5 +1,5 @@
 import { EventBus } from "./pubsub.js";
-import { GPIO, SevSegArray, HexDigit} from "./models.js";
+import { GPIO, SevSegArray, HexDigit } from "./models.js";
 
 
 abstract class Button {
@@ -9,17 +9,17 @@ abstract class Button {
 
     protected btn: SVGCircleElement;
 
-    constructor(btn: HTMLElement, bus: EventBus) {
+    constructor(btn: HTMLElement, bus: EventBus, eventName: string) {
         this.btn = btn.querySelector("circle");
         this.id = btn.id;
 
         btn.onclick = (e) => {
             this.Toggle();
 
-            bus.Publish("btn", {on: this.on, id: this.id} as GPIO);
+            bus.Publish(eventName, { on: this.on, id: this.id } as GPIO);
         };
 
-        bus.Publish("btn", {on: this.on, id: this.id} as GPIO) // initial state
+        bus.Publish(eventName, { on: this.on, id: this.id } as GPIO) // initial state
     }
 
     protected abstract Toggle(): void;
@@ -29,14 +29,13 @@ abstract class Button {
 class PushButton extends Button {
 
     private offR = "18";
-    private onR = "10";
+    private onR = "11";
 
     constructor(btn: HTMLElement, bus: EventBus) {
-        super(btn, bus)
+        super(btn, bus, "btn")
     }
 
     protected Toggle(): void {
-        const r = this.btn.getAttribute('r')
         this.on = !this.on;
 
         this.btn.setAttribute('r', this.on ? this.onR : this.offR);
@@ -50,11 +49,10 @@ class Switch extends Button {
     private onY = "850";
 
     constructor(btn: HTMLElement, bus: EventBus) {
-        super(btn, bus)
+        super(btn, bus, "btn")
     }
 
     protected Toggle(): void {
-        const cy = this.btn.getAttribute('cy')
         this.on = !this.on;
 
         this.btn.setAttribute('cy', this.on ? this.onY : this.offY);
@@ -70,10 +68,10 @@ class LED {
         this.led = led.querySelector("circle");
         this.id = led.id;
 
-        bus.Subscribe("led", (upd) => {this.Set(upd)});
+        bus.Subscribe("led", (upd) => { this.Set(upd) });
     }
 
-    Set(upd : GPIO) {
+    Set(upd: GPIO) {
         if (upd.id != this.id)
             return;
 
@@ -83,16 +81,16 @@ class LED {
 
 
 class SevSegDispl {
-    private display : HTMLTextAreaElement[];
+    private display: HTMLTextAreaElement[];
 
     constructor(display: HTMLElement, bus: EventBus) {
         this.display = Array.from(display.children) as HTMLTextAreaElement[]
 
-        bus.Subscribe("sevseg", (upd) => {this.Set(upd)});
+        bus.Subscribe("sevseg", (upd) => { this.Set(upd) });
     }
 
 
-    Set(upd : SevSegArray) {
+    Set(upd: SevSegArray) {
         [...this.display].reverse().forEach((d: HTMLTextAreaElement, idx: number) => {
             d.value = upd.sevseg[idx];
             d.scrollTop = d.scrollHeight;
@@ -126,8 +124,13 @@ export class Board {
             this.leds[ld_id] = new LED(ld_i, bus);
         }
 
+        this.buttons["BTNL"] = new PushButton(board.getElementById("BTNL"), bus)
+        this.buttons["BTNC"] = new PushButton(board.getElementById("BTNC"), bus)
+        this.buttons["BTNR"] = new PushButton(board.getElementById("BTNR"), bus)
+        this.buttons["BTNU"] = new PushButton(board.getElementById("BTNU"), bus)
+        this.buttons["BTND"] = new PushButton(board.getElementById("BTND"), bus)
+        this.buttons["RSTN"] = new PushButton(board.getElementById("RSTN"), bus)
+
         this.sevseg = new SevSegDispl(document.getElementById("SevSegDispl"), bus);
-
     }
-
 }

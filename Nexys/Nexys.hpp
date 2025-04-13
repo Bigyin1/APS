@@ -1,5 +1,4 @@
 #pragma once
-
 #include <fmt/core.h>
 #include <ixwebsocket/IXWebSocketServer.h>
 
@@ -7,6 +6,7 @@
 #include <bitset>
 #include <chrono>
 #include <iostream>
+#include <map>
 #include <mutex>
 #include <nlohmann/json.hpp>
 #include <sstream>
@@ -18,67 +18,40 @@ using json = nlohmann::json;
 class Peripherals final
 {
 private:
-    uint16_t        lastLeds = 0;
-    std::bitset<16> switches = {0};
+    uint16_t               lastLeds = 0;
+    std::array<uint8_t, 8> sevseg   = {0};
 
-    std::array<uint8_t, 8> sevseg = {0};
+    std::bitset<16>             switches = {0};
+    std::map<std::string, bool> btns;
 
     std::mutex     smtx{};
     ix::WebSocket& conn;
 
 public:
-    Peripherals(ix::WebSocket& wsconn) : conn(wsconn) {}
-
-    void UpdateSwitches(json& gpio) noexcept
+    Peripherals(ix::WebSocket& wsconn)
+        : conn(wsconn), btns({{"BTNL", false},
+                              {"BTNU", false},
+                              {"BTNR", false},
+                              {"BTND", false},
+                              {"BTNC", false},
+                              {"RSTN", false}})
     {
-        std::lock_guard<std::mutex> lock(smtx);
-
-        std::string id = gpio["id"];
-
-        if (!id.starts_with("SW"))
-            return;
-
-        std::stringstream sstream(id.substr(2));
-        size_t            idx;
-        sstream >> idx;
-
-        if (idx > 15)
-            return;
-
-        switches.set(idx, gpio["on"]);
     }
 
-    void SendLEDs(uint16_t leds)
-    {
-        if (leds == lastLeds)
-            return;
+    void SetSwitch(json& gpio);
+    void SetButton(json& btn);
+    bool GetBTNL();
+    bool GetBTNU();
+    bool GetBTNR();
+    bool GetBTND();
+    bool GetBTNC();
+    bool GetRSTN();
 
-        json j;
+    uint16_t GetSwitches();
 
-        std::bitset<16> ledsMap     = leds;
-        std::bitset<16> lastLedsMap = lastLeds;
+    void WSSendLEDs(uint16_t leds);
 
-        for (size_t i = 0; i < ledsMap.size(); ++i)
-        {
-            if (ledsMap[i] == lastLedsMap[i])
-                continue;
-
-            j["gpio"].push_back(
-                {{"id", fmt::format("LD{}", i)}, {"on", ledsMap[i] ? true : false}});
-        }
-
-        conn.sendText(j.dump(4));
-
-        lastLeds = leds;
-    }
-
-    void SendSevSeg(uint8_t digit, uint8_t AN);
-
-    uint16_t GetSwitches() noexcept
-    {
-        std::lock_guard<std::mutex> lock(smtx);
-        return static_cast<uint16_t>(switches.to_ullong());
-    }
+    void WSSendSevSeg(uint8_t digit, uint8_t AN);
 };
 
 class Nexys
@@ -89,11 +62,14 @@ public:
     void StartMainLoop();
     void StopMainLoop() { started.store(false); }
 
-    void UpdateInputs(json inp) { periph.UpdateSwitches(inp["gpio"]); };
+    void SetInputs(json inp)
+    {
+        periph.SetSwitch(inp["gpio"]);
+        periph.SetButton(inp["gpio"]);
+    };
 
 private:
-
-    std::atomic<bool> started  = false;
+    std::atomic<bool> started = false;
 
     Peripherals periph;
 };

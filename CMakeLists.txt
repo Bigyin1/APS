@@ -27,14 +27,15 @@ FetchContent_MakeAvailable(fmt)
 cmake_policy(SET CMP0144 NEW)
 find_package(verilator)
 
+set(V_EXE_NAME Vnexys)
 
-set(CURR_LAB_DIR Labs/01.Adder)
+set(CURR_LAB_DIR Labs/02.ALU)
 
 add_executable(Vnexys Nexys/main.cpp Nexys/Nexys.cpp ${CURR_LAB_DIR}/vidbo.cpp)
 
-target_include_directories(Vnexys PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Nexys)
+target_include_directories(${V_EXE_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Nexys)
 
-target_link_libraries(Vnexys PRIVATE ixwebsocket::ixwebsocket nlohmann_json::nlohmann_json fmt::fmt)
+target_link_libraries(${V_EXE_NAME} PRIVATE ixwebsocket::ixwebsocket nlohmann_json::nlohmann_json fmt::fmt)
 
 
 add_subdirectory(${CURR_LAB_DIR})

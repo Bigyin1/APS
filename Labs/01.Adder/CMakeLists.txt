@@ -1,7 +1,7 @@
 
 verilate(
-    Vnexys
-    PREFIX Vnexys
+    ${V_EXE_NAME}
+    PREFIX ${V_EXE_NAME}
     SOURCES board_files/nexys_adder.sv fulladder32.sv cla4.sv
     VERILATOR_ARGS -Wno-fatal --cc --exe
 )
